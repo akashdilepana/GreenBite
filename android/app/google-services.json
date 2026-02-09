@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "723611520337",
+    "project_id": "greenbite-8aec0",
+    "storage_bucket": "greenbite-8aec0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723611520337:android:a773b1b51cfd3a06d71770",
+        "android_client_info": {
+          "package_name": "com.example.green_bite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNwPiM0eK8JZ2c_b_ut6iQw1eolD9TMiA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
