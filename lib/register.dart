@@ -34,6 +34,9 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       print("User registered & saved to Firestore ✅");
+      
+      // Navigate back to login page
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       print("Registration failed ❌ ${e.message}");
     }
