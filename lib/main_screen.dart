@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'home_page.dart';
-import 'scanner_page.dart';
 import 'inventory_page.dart';
+import 'scanner_page.dart';
 import 'recipe_page.dart';
-import 'nutrition_page.dart';
+import 'profile_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,38 +14,51 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  int selectedIndex = 0;
 
-  int _selectedIndex = 0;
-
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ScannerPage(),
-    const InventoryPage(),
-    const RecipePage(),
-    const NutritionPage(),
+  final List<Widget> pages = const [
+    HomePage(),
+    InventoryPage(),
+    ScannerPage(),
+    RecipePage(),
+    ProfilePage(),
   ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
-
+      body: pages[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: selectedIndex,
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.green,
-        onTap: _onItemTapped,
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: "Scan"),
-          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: "Fridge"),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant), label: "Recipes"),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Stats"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.kitchen),
+            label: "Fridge",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.camera_alt),
+            label: "Scan",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.restaurant),
+            label: "Recipes",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Profile",
+          ),
         ],
       ),
     );
