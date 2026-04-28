@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'login_page.dart';
 
@@ -18,9 +23,58 @@ class _ProfilePageState extends State<ProfilePage> {
   final emailController = TextEditingController();
 
   bool isLoading = false;
+  bool isUploadingImage = false;
 
   DocumentReference<Map<String, dynamic>> get userRef {
     return FirebaseFirestore.instance.collection('users').doc(user!.uid);
+  }
+
+  Future<void> pickAndUploadImage() async {
+    if (user == null) return;
+
+    try {
+      final pickedImage = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+
+      if (pickedImage == null) return;
+
+      setState(() {
+        isUploadingImage = true;
+      });
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child('${user!.uid}.jpg');
+
+      if (kIsWeb) {
+        final bytes = await pickedImage.readAsBytes();
+        await storageRef.putData(bytes);
+      } else {
+        await storageRef.putFile(File(pickedImage.path));
+      }
+
+      final imageUrl = await storageRef.getDownloadURL();
+
+      await userRef.update({
+        'profileImage': imageUrl,
+        'updatedAt': Timestamp.now(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile photo updated")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Image upload failed: $e")),
+      );
+    }
+
+    setState(() {
+      isUploadingImage = false;
+    });
   }
 
   Future<void> updateProfile() async {
@@ -90,18 +144,56 @@ class _ProfilePageState extends State<ProfilePage> {
             emailController.text = data['email'] ?? user!.email ?? '';
           }
 
+          final profileImage = data?['profileImage'];
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.green,
-                  child: Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.white,
-                  ),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 55,
+                      backgroundColor: Colors.green,
+                      backgroundImage: profileImage != null &&
+                              profileImage.toString().isNotEmpty
+                          ? NetworkImage(profileImage)
+                          : null,
+                      child: profileImage == null ||
+                              profileImage.toString().isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: isUploadingImage ? null : pickAndUploadImage,
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.green.shade700,
+                          child: isUploadingImage
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.camera_alt,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),
