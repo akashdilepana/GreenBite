@@ -4,7 +4,7 @@ import 'home_page.dart';
 import 'inventory_page.dart';
 import 'scanner_page.dart';
 import 'recipe_page.dart';
-import 'profile_page.dart';
+import 'nutrition_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
     InventoryPage(),
     ScannerPage(),
     RecipePage(),
-    ProfilePage(),
+    NutritionPage(),
   ];
 
   @override
@@ -48,16 +48,16 @@ class _MainScreenState extends State<MainScreen> {
             label: "Fridge",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.camera_alt),
-            label: "Scan",
+            icon: Icon(Icons.receipt_long),
+            label: "Bill Scan",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.restaurant),
             label: "Recipes",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
+            icon: Icon(Icons.bar_chart),
+            label: "Nutrition",
           ),
         ],
       ),

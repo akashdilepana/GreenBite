@@ -6,6 +6,7 @@ import 'scanner_page.dart';
 import 'inventory_page.dart';
 import 'recipe_page.dart';
 import 'nutrition_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -44,6 +45,14 @@ class HomePage extends StatelessWidget {
         title: const Text("GreenBite 🌱"),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              _goToPage(context, const ProfilePage());
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -56,71 +65,77 @@ class HomePage extends StatelessWidget {
                 final name = data?['name'] ?? "GreenBite User";
                 final profileImage = data?['profileImage'];
 
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF2E7D32),
-                        Color(0xFF43A047),
-                        Color(0xFF81C784),
+                return GestureDetector(
+                  onTap: () => _goToPage(context, const ProfilePage()),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF2E7D32),
+                          Color(0xFF43A047),
+                          Color(0xFF81C784),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 34,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                              profileImage != null && profileImage != ""
+                                  ? NetworkImage(profileImage)
+                                  : null,
+                          child: profileImage == null || profileImage == ""
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 38,
+                                  color: Colors.green,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Welcome back 👋",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                "Tap here to view your profile",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 34,
-                        backgroundColor: Colors.white,
-                        backgroundImage:
-                            profileImage != null && profileImage != ""
-                                ? NetworkImage(profileImage)
-                                : null,
-                        child: profileImage == null || profileImage == ""
-                            ? const Icon(
-                                Icons.person,
-                                size: 38,
-                                color: Colors.green,
-                              )
-                            : null,
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Welcome back 👋",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              "Eat smart. Waste less. Live better.",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
                 );
               },
@@ -342,8 +357,8 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: _actionButton(
-                    "Scan Food",
-                    Icons.camera_alt,
+                    "Bill Scan",
+                    Icons.receipt_long,
                     Colors.green,
                     () => _goToPage(context, const ScannerPage()),
                   ),
