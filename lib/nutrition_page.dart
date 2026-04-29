@@ -167,7 +167,7 @@ class _NutritionPageState extends State<NutritionPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Nutrition Plan 📊"),
+        title: const Text("Nutrition Plan"),
         backgroundColor: Colors.green,
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(

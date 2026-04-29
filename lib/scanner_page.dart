@@ -21,37 +21,11 @@ class _ScannerPageState extends State<ScannerPage> {
   List<String> detectedItems = [];
 
   final List<String> groceryKeywords = [
-    'milk',
-    'bread',
-    'egg',
-    'eggs',
-    'rice',
-    'banana',
-    'apple',
-    'orange',
-    'chicken',
-    'fish',
-    'beef',
-    'potato',
-    'onion',
-    'tomato',
-    'carrot',
-    'beans',
-    'cheese',
-    'yogurt',
-    'butter',
-    'flour',
-    'sugar',
-    'salt',
-    'tea',
-    'coffee',
-    'noodles',
-    'pasta',
-    'oil',
-    'cabbage',
-    'leeks',
-    'garlic',
-    'ginger',
+    'milk', 'bread', 'egg', 'eggs', 'rice', 'banana', 'apple', 'orange',
+    'chicken', 'fish', 'beef', 'potato', 'onion', 'tomato', 'carrot',
+    'beans', 'cheese', 'yogurt', 'butter', 'flour', 'sugar', 'salt',
+    'tea', 'coffee', 'noodles', 'pasta', 'oil', 'cabbage', 'leeks',
+    'garlic', 'ginger',
   ];
 
   CollectionReference<Map<String, dynamic>> get itemsRef {
@@ -63,7 +37,6 @@ class _ScannerPageState extends State<ScannerPage> {
 
   Future<void> pickBillImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
-
     if (pickedFile == null) return;
 
     setState(() {
@@ -75,21 +48,15 @@ class _ScannerPageState extends State<ScannerPage> {
   }
 
   Future<void> scanBillText(File imageFile) async {
-    setState(() {
-      isScanning = true;
-    });
+    setState(() => isScanning = true);
 
     try {
       final inputImage = InputImage.fromFile(imageFile);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-
-      final RecognizedText recognizedText =
-          await textRecognizer.processImage(inputImage);
-
+      final recognizedText = await textRecognizer.processImage(inputImage);
       await textRecognizer.close();
 
       final text = recognizedText.text.toLowerCase();
-
       final foundItems = <String>{};
 
       for (final keyword in groceryKeywords) {
@@ -113,18 +80,11 @@ class _ScannerPageState extends State<ScannerPage> {
       );
     }
 
-    setState(() {
-      isScanning = false;
-    });
+    setState(() => isScanning = false);
   }
 
   Future<void> addItemsToFridge() async {
-    if (detectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No items to add")),
-      );
-      return;
-    }
+    if (detectedItems.isEmpty) return;
 
     final expiryDate = DateTime.now().add(const Duration(days: 7));
 
@@ -148,92 +108,51 @@ class _ScannerPageState extends State<ScannerPage> {
     });
   }
 
-  void removeDetectedItem(String item) {
-    setState(() {
-      detectedItems.remove(item);
-    });
-  }
-
-  String _capitalize(String text) {
-    if (text.isEmpty) return text;
-    return text[0].toUpperCase() + text.substring(1);
-  }
+  String _capitalize(String text) =>
+      text.isEmpty ? text : text[0].toUpperCase() + text.substring(1);
 
   @override
   Widget build(BuildContext context) {
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("Please login first")),
-      );
+      return const Scaffold(body: Center(child: Text("Please login first")));
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FFF4),
+      backgroundColor: const Color(0xFFF6FFF2),
       appBar: AppBar(
-        title: const Text("Bill Scanner 🧾"),
-        backgroundColor: Colors.green,
+        title: const Text(
+          "Bill Scanner",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.green.shade200),
+                color: const Color(0xFF1B5E20),
+                borderRadius: BorderRadius.circular(28),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Icon(
-                    Icons.receipt_long,
-                    size: 70,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Scan Your Grocery Bill",
+                  Icon(Icons.receipt_long, size: 70, color: Colors.white),
+                  SizedBox(height: 12),
+                  Text(
+                    "Scan Grocery Bill",
                     style: TextStyle(
-                      fontSize: 22,
+                      color: Colors.white,
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Take a photo of your Food City bill and GreenBite will detect grocery items.",
+                  SizedBox(height: 8),
+                  Text(
+                    "Take a photo of your bill and add detected items to your fridge.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  const SizedBox(height: 18),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () => pickBillImage(ImageSource.camera),
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text("Camera"),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () => pickBillImage(ImageSource.gallery),
-                          icon: const Icon(Icons.image),
-                          label: const Text("Gallery"),
-                        ),
-                      ),
-                    ],
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
@@ -241,73 +160,102 @@ class _ScannerPageState extends State<ScannerPage> {
 
             const SizedBox(height: 20),
 
+            Row(
+              children: [
+                Expanded(
+                  child: _scanButton(
+                    "Camera",
+                    Icons.camera_alt,
+                    () => pickBillImage(ImageSource.camera),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _scanButton(
+                    "Gallery",
+                    Icons.image,
+                    () => pickBillImage(ImageSource.gallery),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 22),
+
             if (billImage != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24),
                 child: Image.file(
                   billImage!,
-                  height: 220,
+                  height: 230,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
 
-            const SizedBox(height: 20),
-
-            if (isScanning)
-              const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 10),
-                  Text("Scanning bill..."),
-                ],
-              ),
+            if (isScanning) ...[
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 10),
+              const Text("Scanning bill..."),
+            ],
 
             if (!isScanning && detectedItems.isNotEmpty) ...[
+              const SizedBox(height: 24),
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Detected Grocery Items",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  "Detected Items",
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: detectedItems.map((item) {
-                  return Chip(
-                    label: Text(item),
-                    backgroundColor: Colors.green.shade100,
-                    deleteIcon: const Icon(Icons.close),
-                    onDeleted: () => removeDetectedItem(item),
-                  );
-                }).toList(),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: detectedItems.map((item) {
+                    return Chip(
+                      label: Text(item),
+                      backgroundColor: const Color(0xFFDFF5D8),
+                      deleteIcon: const Icon(Icons.close),
+                      onDeleted: () {
+                        setState(() => detectedItems.remove(item));
+                      },
+                    );
+                  }).toList(),
+                ),
               ),
-
-              const SizedBox(height: 22),
-
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
                   onPressed: addItemsToFridge,
                   icon: const Icon(Icons.kitchen),
-                  label: const Text("Add Items to Virtual Fridge"),
+                  label: const Text("Add Items to Fridge"),
                 ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _scanButton(String text, IconData icon, VoidCallback onTap) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon),
+      label: Text(text),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
       ),
     );
   }

@@ -42,9 +42,7 @@ class _RecipePageState extends State<RecipePage> {
 
     final generatedRecipes = <Map<String, dynamic>>[];
 
-    bool has(String food) {
-      return foods.any((item) => item.contains(food));
-    }
+    bool has(String food) => foods.any((item) => item.contains(food));
 
     if (has('banana') && has('milk')) {
       generatedRecipes.add({
@@ -73,40 +71,12 @@ class _RecipePageState extends State<RecipePage> {
       });
     }
 
-    if (has('rice') && (has('carrot') || has('beans') || has('vegetable'))) {
-      generatedRecipes.add({
-        'title': 'Vegetable Fried Rice',
-        'time': '25 min',
-        'items': 'Rice, Vegetables',
-        'steps': 'Cook vegetables, add rice, season and stir fry.',
-      });
-    }
-
-    if (has('tomato') && has('onion')) {
-      generatedRecipes.add({
-        'title': 'Tomato Onion Salad',
-        'time': '8 min',
-        'items': 'Tomato, Onion',
-        'steps': 'Slice tomato and onion. Mix with salt and pepper.',
-      });
-    }
-
-    if (has('potato')) {
-      generatedRecipes.add({
-        'title': 'Potato Curry',
-        'time': '30 min',
-        'items': 'Potato',
-        'steps': 'Cook potatoes with curry powder, onion, and spices.',
-      });
-    }
-
     if (generatedRecipes.isEmpty) {
       generatedRecipes.add({
         'title': 'Mixed Fridge Meal',
         'time': '20 min',
         'items': foods.join(', '),
-        'steps':
-            'Use your available ingredients to prepare a simple stir fry, salad, or rice bowl.',
+        'steps': 'Use available ingredients to prepare a simple healthy meal.',
       });
     }
 
@@ -142,17 +112,17 @@ class _RecipePageState extends State<RecipePage> {
                   controller: titleController,
                   decoration: const InputDecoration(labelText: "Recipe Title"),
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: timeController,
                   decoration: const InputDecoration(labelText: "Time"),
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: itemsController,
-                  decoration: const InputDecoration(
-                    labelText: "Ingredients",
-                    hintText: "Rice, carrot, egg",
-                  ),
+                  decoration: const InputDecoration(labelText: "Ingredients"),
                 ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: stepsController,
                   maxLines: 4,
@@ -168,15 +138,6 @@ class _RecipePageState extends State<RecipePage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.trim().isEmpty ||
-                    timeController.text.trim().isEmpty ||
-                    itemsController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please fill required fields")),
-                  );
-                  return;
-                }
-
                 final recipeData = {
                   'title': titleController.text.trim(),
                   'time': timeController.text.trim(),
@@ -207,10 +168,6 @@ class _RecipePageState extends State<RecipePage> {
 
   Future<void> _deleteRecipe(String docId) async {
     await recipesRef.doc(docId).delete();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Recipe deleted")),
-    );
   }
 
   void _viewRecipe(Map<String, dynamic> recipe) {
@@ -221,8 +178,7 @@ class _RecipePageState extends State<RecipePage> {
         content: Text(
           "Ingredients:\n${recipe['items'] ?? ''}\n\n"
           "Time: ${recipe['time'] ?? ''}\n\n"
-          "Steps:\n${recipe['steps'] ?? 'No steps added'}\n\n"
-          "${recipe['generated'] == true ? 'Generated from your Virtual Fridge.' : 'Custom recipe.'}",
+          "Steps:\n${recipe['steps'] ?? 'No steps added'}",
         ),
         actions: [
           TextButton(
@@ -237,54 +193,62 @@ class _RecipePageState extends State<RecipePage> {
   @override
   Widget build(BuildContext context) {
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("Please login first")),
-      );
+      return const Scaffold(body: Center(child: Text("Please login first")));
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF4),
+      backgroundColor: const Color(0xFFF6FFF2),
       appBar: AppBar(
-        title: const Text("Waste-Free Recipes 🍲"),
-        backgroundColor: Colors.green,
+        title: const Text(
+          "Recipes",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF2E7D32),
         onPressed: () => _showRecipeDialog(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
         children: [
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(18),
+            margin: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: Colors.orange.shade100,
-              borderRadius: BorderRadius.circular(18),
+              color: const Color(0xFF1B5E20),
+              borderRadius: BorderRadius.circular(28),
             ),
             child: Column(
               children: [
-                const Icon(Icons.auto_awesome, color: Colors.orange, size: 40),
-                const SizedBox(height: 8),
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 46),
+                const SizedBox(height: 10),
                 const Text(
-                  "Generate Recipes From Virtual Fridge",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "GreenBite will suggest meals using your current food items.",
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 14),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
+                  "Generate From Fridge",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
                   ),
-                  onPressed: generateRecipesFromFridge,
-                  icon: const Icon(Icons.restaurant_menu),
-                  label: const Text("Generate Recipes"),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Create recipes using your available fridge items.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+                SizedBox(
+                  width: double.infinity, // 🔥 makes button full width
+                  height: 55, // optional (increase height)
+                  child: ElevatedButton.icon(
+                    onPressed: generateRecipesFromFridge,
+                    icon: const Icon(Icons.restaurant_menu),
+                    label: const Text("Generate Recipes"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFA9F579),
+                      foregroundColor: const Color(0xFF1B5E20),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -299,11 +263,11 @@ class _RecipePageState extends State<RecipePage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final recipes = snapshot.data?.docs ?? [];
+                final recipes = snapshot.data!.docs;
 
                 if (recipes.isEmpty) {
                   return const Center(
@@ -312,26 +276,28 @@ class _RecipePageState extends State<RecipePage> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 90),
                   itemCount: recipes.length,
                   itemBuilder: (context, index) {
                     final doc = recipes[index];
                     final recipe = doc.data();
 
-                    return Card(
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                       child: ListTile(
+                        contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: recipe['generated'] == true
-                              ? Colors.green.shade100
-                              : Colors.orange.shade100,
+                          backgroundColor: const Color(0xFFDFF5D8),
                           child: Icon(
                             recipe['generated'] == true
                                 ? Icons.auto_awesome
                                 : Icons.restaurant,
-                            color: recipe['generated'] == true
-                                ? Colors.green
-                                : Colors.orange,
+                            color: const Color(0xFF2E7D32),
                           ),
                         ),
                         title: Text(
@@ -351,15 +317,10 @@ class _RecipePageState extends State<RecipePage> {
                               _deleteRecipe(doc.id);
                             }
                           },
-                          itemBuilder: (context) => const [
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text("Edit")),
                             PopupMenuItem(
-                              value: 'edit',
-                              child: Text("Edit"),
-                            ),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text("Delete"),
-                            ),
+                                value: 'delete', child: Text("Delete")),
                           ],
                         ),
                       ),

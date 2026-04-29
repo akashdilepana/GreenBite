@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import 'scanner_page.dart';
 import 'inventory_page.dart';
@@ -40,102 +41,62 @@ class HomePage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FFF4),
+      backgroundColor: const Color(0xFFF6FFF2),
       appBar: AppBar(
-        title: const Text("GreenBite 🌱"),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
+        title: const Text(
+          "GreenBite",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              _goToPage(context, const ProfilePage());
-            },
+            icon: const CircleAvatar(
+              backgroundColor: Color(0xFFDFF5D8),
+              child: Icon(Icons.person, color: Color(0xFF1B5E20)),
+            ),
+            onPressed: () => _goToPage(context, const ProfilePage()),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: _userRef(user.uid).snapshots(),
               builder: (context, snapshot) {
                 final data = snapshot.data?.data();
                 final name = data?['name'] ?? "GreenBite User";
-                final profileImage = data?['profileImage'];
 
-                return GestureDetector(
-                  onTap: () => _goToPage(context, const ProfilePage()),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF2E7D32),
-                          Color(0xFF43A047),
-                          Color(0xFF81C784),
-                        ],
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B5E20),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Your Daily AI Plan",
+                        style: TextStyle(color: Colors.white70, fontSize: 15),
                       ),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 34,
-                          backgroundColor: Colors.white,
-                          backgroundImage:
-                              profileImage != null && profileImage != ""
-                                  ? NetworkImage(profileImage)
-                                  : null,
-                          child: profileImage == null || profileImage == ""
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 38,
-                                  color: Colors.green,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Welcome back 👋",
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                "Tap here to view your profile",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_ios,
+                      const SizedBox(height: 6),
+                      Text(
+                        "Hi, $name 👋",
+                        style: const TextStyle(
                           color: Colors.white,
-                          size: 18,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Use your fridge items before they expire and reduce food waste.",
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -158,16 +119,15 @@ class HomePage extends StatelessWidget {
 
                   for (var doc in items) {
                     final data = doc.data();
+
                     if (data['expiryDate'] != null) {
                       final expiry =
                           (data['expiryDate'] as Timestamp).toDate();
 
                       final daysLeft = expiry
-                          .difference(DateTime(
-                            today.year,
-                            today.month,
-                            today.day,
-                          ))
+                          .difference(
+                            DateTime(today.year, today.month, today.day),
+                          )
                           .inDays;
 
                       if (daysLeft < 0) {
@@ -179,54 +139,22 @@ class HomePage extends StatelessWidget {
                   }
                 }
 
-                return GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 1.25,
-                  children: [
-                    _dashboardCard(
-                      "Items",
-                      "$itemCount",
-                      Icons.kitchen,
-                      const Color(0xFF4CAF50),
-                    ),
-                    _dashboardCard(
-                      "Expiring Soon",
-                      "$expiringSoon",
-                      Icons.warning_amber_rounded,
-                      const Color(0xFFFF9800),
-                    ),
-                    _dashboardCard(
-                      "Expired",
-                      "$expired",
-                      Icons.delete_forever,
-                      const Color(0xFFE53935),
-                    ),
-                    _dashboardCard(
-                      "Waste Saved",
-                      "${itemCount * 0.2}kg",
-                      Icons.eco,
-                      const Color(0xFF00ACC1),
-                    ),
-                  ],
+                final wasteSaved = itemCount * 0.2;
+
+                return _pantryPieChart(
+                  itemCount: itemCount,
+                  expiringSoon: expiringSoon,
+                  expired: expired,
+                  wasteSaved: wasteSaved,
                 );
               },
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
 
-            Row(
-              children: const [
-                Icon(Icons.notifications_active, color: Colors.orange),
-                SizedBox(width: 8),
-                Text(
-                  "Expiry Notifications",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ],
+            const Text(
+              "Expiry Alerts",
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 12),
@@ -234,80 +162,67 @@ class HomePage extends StatelessWidget {
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _itemsRef(user.uid)
                   .orderBy('expiryDate')
-                  .limit(5)
+                  .limit(4)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return _messageBox(
-                    "Error loading expiry notifications",
-                    Icons.error,
-                    Colors.red,
-                  );
+                  return _infoBox("Unable to load alerts", Icons.error);
                 }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                final docs = snapshot.data?.docs ?? [];
+                final docs = snapshot.data!.docs;
 
                 if (docs.isEmpty) {
-                  return _messageBox(
-                    "No food items added yet",
-                    Icons.info,
-                    Colors.blue,
-                  );
+                  return _infoBox("No food items added yet", Icons.info);
                 }
 
                 return Column(
                   children: docs.map((doc) {
                     final data = doc.data();
-                    final name = data['name'] ?? 'Unknown item';
+
+                    final name = data['name'] ?? 'Unknown';
                     final quantity = data['quantity'] ?? '';
                     final expiry = (data['expiryDate'] as Timestamp).toDate();
 
                     final today = DateTime.now();
                     final daysLeft = expiry
-                        .difference(DateTime(
-                          today.year,
-                          today.month,
-                          today.day,
-                        ))
+                        .difference(
+                          DateTime(today.year, today.month, today.day),
+                        )
                         .inDays;
 
+                    String text;
                     Color color;
-                    String status;
 
                     if (daysLeft < 0) {
+                      text = "Expired";
                       color = Colors.red;
-                      status = "Expired";
                     } else if (daysLeft == 0) {
+                      text = "Expires today";
                       color = Colors.red;
-                      status = "Expires today";
                     } else if (daysLeft <= 3) {
+                      text = "Expires in $daysLeft days";
                       color = Colors.orange;
-                      status = "Expires in $daysLeft days";
                     } else {
+                      text = "$daysLeft days left";
                       color = Colors.green;
-                      status = "Fresh - $daysLeft days left";
                     }
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: color.withOpacity(0.5)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: color,
-                            child: const Icon(
-                              Icons.fastfood,
-                              color: Colors.white,
-                            ),
+                            backgroundColor: color.withOpacity(0.15),
+                            child: Icon(Icons.fastfood, color: color),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -317,22 +232,21 @@ class HomePage extends StatelessWidget {
                                 Text(
                                   name,
                                   style: const TextStyle(
-                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
                                 Text("Qty: $quantity"),
-                                Text(
-                                  status,
-                                  style: TextStyle(
-                                    color: color,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                               ],
                             ),
                           ),
-                          Icon(Icons.warning_amber_rounded, color: color),
+                          Text(
+                            text,
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -341,14 +255,11 @@ class HomePage extends StatelessWidget {
               },
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
 
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Quick Actions",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+            const Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 12),
@@ -359,17 +270,15 @@ class HomePage extends StatelessWidget {
                   child: _actionButton(
                     "Bill Scan",
                     Icons.receipt_long,
-                    Colors.green,
                     () => _goToPage(context, const ScannerPage()),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _actionButton(
-                    "Recipes",
-                    Icons.restaurant,
-                    Colors.orange,
-                    () => _goToPage(context, const RecipePage()),
+                    "Fridge",
+                    Icons.kitchen,
+                    () => _goToPage(context, const InventoryPage()),
                   ),
                 ),
               ],
@@ -381,18 +290,16 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: _actionButton(
-                    "Fridge",
-                    Icons.kitchen,
-                    Colors.blue,
-                    () => _goToPage(context, const InventoryPage()),
+                    "Recipes",
+                    Icons.restaurant,
+                    () => _goToPage(context, const RecipePage()),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: _actionButton(
                     "Nutrition",
                     Icons.bar_chart,
-                    Colors.purple,
                     () => _goToPage(context, const NutritionPage()),
                   ),
                 ),
@@ -404,81 +311,164 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _dashboardCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _pantryPieChart({
+    required int itemCount,
+    required int expiringSoon,
+    required int expired,
+    required double wasteSaved,
+  }) {
+    final bool empty = itemCount == 0 && expiringSoon == 0 && expired == 0;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 34, color: Colors.white),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
+          const Text(
+            "Pantry Summary",
+            style: TextStyle(
+              fontSize: 21,
               fontWeight: FontWeight.bold,
             ),
           ),
+
+          const SizedBox(height: 18),
+
+          SizedBox(
+            height: 230,
+            child: PieChart(
+              PieChartData(
+                centerSpaceRadius: 48,
+                sectionsSpace: 3,
+                sections: empty
+                    ? [
+                        PieChartSectionData(
+                          value: 1,
+                          title: "No Data",
+                          color: Colors.grey.shade300,
+                          radius: 65,
+                          titleStyle: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ]
+                    : [
+                        PieChartSectionData(
+                          value: itemCount == 0 ? 0.1 : itemCount.toDouble(),
+                          title: "Items\n$itemCount",
+                          color: const Color(0xFF2E7D32),
+                          radius: 68,
+                          titleStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        PieChartSectionData(
+                          value: expiringSoon == 0
+                              ? 0.1
+                              : expiringSoon.toDouble(),
+                          title: "Alerts\n$expiringSoon",
+                          color: Colors.orange,
+                          radius: 62,
+                          titleStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        PieChartSectionData(
+                          value: expired == 0 ? 0.1 : expired.toDouble(),
+                          title: "Expired\n$expired",
+                          color: Colors.red,
+                          radius: 58,
+                          titleStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        PieChartSectionData(
+                          value: wasteSaved == 0 ? 0.1 : wasteSaved,
+                          title: "Saved\n${wasteSaved.toStringAsFixed(1)}kg",
+                          color: Colors.teal,
+                          radius: 64,
+                          titleStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          Wrap(
+            spacing: 14,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              _legend("Fridge Items", const Color(0xFF2E7D32)),
+              _legend("Expiry Alerts", Colors.orange),
+              _legend("Expired", Colors.red),
+              _legend("Waste Saved", Colors.teal),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _actionButton(
-    String text,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+  Widget _legend(String title, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
-      onPressed: onTap,
-      icon: Icon(icon),
-      label: Text(text),
+        const SizedBox(width: 6),
+        Text(title),
+      ],
     );
   }
 
-  Widget _messageBox(String text, IconData icon, Color color) {
+  Widget _actionButton(String text, IconData icon, VoidCallback onTap) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon),
+      label: Text(text),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF2E7D32),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+    );
+  }
+
+  Widget _infoBox(String text, IconData icon) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFDFF5D8),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
-          Icon(icon, color: color),
+          Icon(icon, color: const Color(0xFF2E7D32)),
           const SizedBox(width: 10),
           Expanded(child: Text(text)),
         ],

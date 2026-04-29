@@ -20,16 +20,9 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   Future<void> _addItem() async {
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please login first")),
-      );
-      return;
-    }
-
     final nameController = TextEditingController();
     final qtyController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 7));
 
     showDialog(
       context: context,
@@ -43,16 +36,17 @@ class _InventoryPageState extends State<InventoryPage> {
                 controller: nameController,
                 decoration: const InputDecoration(labelText: "Item name"),
               ),
+              const SizedBox(height: 12),
               TextField(
                 controller: qtyController,
                 decoration: const InputDecoration(labelText: "Quantity"),
               ),
               const SizedBox(height: 12),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () async {
                   final picked = await showDatePicker(
                     context: dialogContext,
-                    initialDate: DateTime.now(),
+                    initialDate: selectedDate,
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2100),
                   );
@@ -61,7 +55,8 @@ class _InventoryPageState extends State<InventoryPage> {
                     selectedDate = picked;
                   }
                 },
-                child: const Text("Select Expiry Date"),
+                icon: const Icon(Icons.calendar_month),
+                label: const Text("Select Expiry Date"),
               ),
             ],
           ),
@@ -72,32 +67,22 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                try {
-                  if (nameController.text.trim().isEmpty ||
-                      qtyController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill all fields")),
-                    );
-                    return;
-                  }
-
-                  await itemsRef.add({
-                    'name': nameController.text.trim(),
-                    'quantity': qtyController.text.trim(),
-                    'expiryDate': Timestamp.fromDate(selectedDate),
-                    'createdAt': FieldValue.serverTimestamp(),
-                  });
-
-                  Navigator.pop(dialogContext);
-
+                if (nameController.text.trim().isEmpty ||
+                    qtyController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Item added successfully")),
+                    const SnackBar(content: Text("Fill all fields")),
                   );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Add failed: $e")),
-                  );
+                  return;
                 }
+
+                await itemsRef.add({
+                  'name': nameController.text.trim(),
+                  'quantity': qtyController.text.trim(),
+                  'expiryDate': Timestamp.fromDate(selectedDate),
+                  'createdAt': Timestamp.now(),
+                });
+
+                Navigator.pop(dialogContext);
               },
               child: const Text("Save"),
             ),
@@ -119,15 +104,26 @@ class _InventoryPageState extends State<InventoryPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Edit Item"),
+          title: const Text("Update Item"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController),
-              TextField(controller: qtyController),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Item name"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: qtyController,
+                decoration: const InputDecoration(labelText: "Quantity"),
+              ),
             ],
           ),
           actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text("Cancel"),
+            ),
             ElevatedButton(
               onPressed: () async {
                 await itemsRef.doc(id).update({
@@ -138,38 +134,54 @@ class _InventoryPageState extends State<InventoryPage> {
                 Navigator.pop(dialogContext);
               },
               child: const Text("Update"),
-            )
+            ),
           ],
         );
       },
     );
   }
 
-  Color _getColor(DateTime expiry) {
-    final days = expiry.difference(DateTime.now()).inDays;
+  Color _statusColor(DateTime expiry) {
+    final today = DateTime.now();
+    final days = expiry
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
 
-    if (days <= 1) return Colors.red;
+    if (days < 0) return Colors.red;
     if (days <= 3) return Colors.orange;
-    return Colors.green;
+    return const Color(0xFF2E7D32);
+  }
+
+  String _statusText(DateTime expiry) {
+    final today = DateTime.now();
+    final days = expiry
+        .difference(DateTime(today.year, today.month, today.day))
+        .inDays;
+
+    if (days < 0) return "Expired";
+    if (days == 0) return "Today";
+    if (days <= 3) return "$days days";
+    return "$days days left";
   }
 
   @override
   Widget build(BuildContext context) {
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("Please login first")),
-      );
+      return const Scaffold(body: Center(child: Text("Please login first")));
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF6FFF2),
       appBar: AppBar(
-        title: const Text("Virtual Fridge 🧊"),
-        backgroundColor: Colors.green,
+        title: const Text(
+          "Virtual Fridge",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF2E7D32),
         onPressed: _addItem,
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: itemsRef.orderBy('createdAt', descending: true).snapshots(),
@@ -178,48 +190,101 @@ class _InventoryPageState extends State<InventoryPage> {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final items = snapshot.data!.docs;
 
           if (items.isEmpty) {
-            return const Center(child: Text("No items yet. Tap + to add."));
+            return const Center(
+              child: Text("No items yet. Tap + to add food."),
+            );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(18),
             itemCount: items.length,
             itemBuilder: (context, index) {
-              final item = items[index];
-              final data = item.data();
+              final doc = items[index];
+              final data = doc.data();
 
-              final expiry =
-                  (data['expiryDate'] as Timestamp).toDate();
+              final expiry = (data['expiryDate'] as Timestamp).toDate();
+              final color = _statusColor(expiry);
 
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: _getColor(expiry),
-                  ),
-                  title: Text(data['name'] ?? ''),
-                  subtitle: Text(
-                    "Qty: ${data['quantity']} | Exp: ${expiry.day}/${expiry.month}/${expiry.year}",
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _updateItem(item.id, data),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: color.withOpacity(0.15),
+                      child: Icon(Icons.fastfood, color: color),
+                    ),
+
+                    const SizedBox(width: 14),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data['name'] ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text("Qty: ${data['quantity']}"),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Expiry: ${expiry.day}/${expiry.month}/${expiry.year}",
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _deleteItem(item.id),
-                      ),
-                    ],
-                  ),
+                    ),
+
+                    Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _statusText(expiry),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20),
+                              onPressed: () => _updateItem(doc.id, data),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 20),
+                              onPressed: () => _deleteItem(doc.id),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
