@@ -329,7 +329,7 @@ class HomePage extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            "Pantry Summary",
+            "Fridge Summary",
             style: TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.bold,
